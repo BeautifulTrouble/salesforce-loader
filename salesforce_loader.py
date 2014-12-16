@@ -159,7 +159,7 @@ for record in records:
     '''.split():
         value = record[field]
         if value.strip():
-            record[field] = '\n' + '\n'.join(u'- "{}"'.format(i) for i in value.split(';'))
+            record[field] = '\n' + '\n'.join(u'- "{}"'.format(i) for i in sorted(value.split(';')))
             
     # Learn more filter
     items = record['learn_more'].strip().split('\n\n')
