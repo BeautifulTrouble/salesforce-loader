@@ -19,8 +19,8 @@ from config import (
 # Setup                                                                   
 # ////////////////////////////////////////////////////////////////////////////
 # Allow invocation of the script from anywhere
-REALPATH = os.path.dirname(os.path.realpath(__file__))
-os.chdir(REALPATH)
+REAL_PATH = os.path.dirname(os.path.realpath(__file__))
+os.chdir(REAL_PATH)
 
 # Utilities                                                                   
 # ////////////////////////////////////////////////////////////////////////////
@@ -56,13 +56,13 @@ salesforce2jekyll = {v:k for k,v in jekyll2salesforce.items()}
 
 # Fetch records
 # ////////////////////////////////////////////////////////////////////////////
-# If the word offline is specified on the command line, use a cached query
+# If the word "offline" is specified on the command line, use a cached query
 if 'offline' in sys.argv:
     try:
         with open(CACHE_FILE, 'rb') as file:
             records = pickle.load(file)
     except IOError: 
-        die("Can't work in offline mode because no CACHE_FILE exists")
+        die("Can't work offline because no CACHE_FILE exists")
 else:
     sf = Salesforce(
         username=SALESFORCE_USERNAME, 
@@ -83,6 +83,9 @@ else:
 records = [{j: (r[s] or '').replace('\r\n','\n') for j,s in jekyll2salesforce.items()} for r in records]
 
 for record in records:
+    # Create a slug before modifying title
+    record['slug'] = re.sub(r'(?u)\W', '-', record['title'].lower())
+
     # Typography filter
     for field in '''
         contributors 
@@ -135,34 +138,35 @@ for record in records:
 
 # Write the jekyll files
 # ////////////////////////////////////////////////////////////////////////////
+template = u'''---
+id: {id}
+title: "{title}"
+short_write_up: "{short_write_up}"
+where: "{where}"
+when: "{when}"
+who: "{who}"
+scale: "{scale}"
+values:{values}
+related_solutions:{related_solutions}
+related_theories:{related_theories}
+related_stories:{related_stories}
+tags:{tags}
+learn_more:{learn_more}
+images:
+-
+    url: "{image_name}"
+    name: "{image_name}"
+    caption: "{image_caption}"
+    source: "{image_source}"
+    source_url: "{image_source_url}"
+contributors:{contributors}
+---
+'''
 for record in records:
-    template = u'''---
-    id: {id}
-    title: "{title}"
-    short_write_up: "{short_write_up}"
-    where: "{where}"
-    when: "{when}"
-    who: "{who}"
-    scale: "{scale}"
-    values:{values}
-    related_solutions:{related_solutions}
-    related_theories:{related_theories}
-    related_stories:{related_stories}
-    tags:{tags}
-    learn_more:{learn_more}
-    images:
-    -
-        url: "{image_name}"
-        name: "{image_name}"
-        caption: "{image_caption}"
-        source: "{image_source}"
-        source_url: "{image_source_url}"
-    contributors:{contributors}
-    ---
-    '''.format(**record).encode('utf8')
+    output = template.format(**record).encode('utf8')
 
-    # Select and create output directory
-    directory = REALPATH + '/' + OUTPUT_PREFIX + {
+    # Create output directory
+    directory = REAL_PATH + '/' + OUTPUT_PREFIX + {
         'Story':    '_stories',
         'Theory':   '_theories',
         'Value':    '_values',
@@ -172,12 +176,11 @@ for record in records:
         os.mkdir(directory)
         warn('Created ' + directory)
     
-    # Come up with a path
-    slug = re.sub(r'\W', '-', record['title'].lower(), re.U)
-    filename = '{}/{}.md'.format(directory, slug)
+    # Build path using the slug created above
+    filename = u'{}/{}.md'.format(directory, record['slug'])
 
     # Produce tangible output! (But why not straight to json?)
     with open(filename, 'wb') as file:
-        file.write(template)
+        file.write(output)
         warn('Wrote ' + filename)
 
