@@ -24,8 +24,13 @@ os.chdir(REAL_PATH)
 
 # Utilities                                                                   
 # ////////////////////////////////////////////////////////////////////////////
-warn = lambda s: sys.stderr.write(s + '\n') and sys.stderr.flush() 
-die = lambda s: warn(s) or sys.exit(1)
+def warn(s, color=32):
+    sys.stderr.write(u'\033[{}m{}\033[0m\n'.format(color, s))
+    sys.stderr.flush()
+
+def die(s):
+    warn(s, color=31)
+    sys.exit(1)
 
 # Mapping of field names between salesforce and jekyll front matter
 # ////////////////////////////////////////////////////////////////////////////
@@ -79,12 +84,52 @@ else:
 
 # Clean and process records
 # ////////////////////////////////////////////////////////////////////////////
-# Convert record keys from salesforce to jekyll names, replace None w/'' & eliminate CRLFs
+# Convert record keys from salesforce to jekyll names, replace None w/'' & remove carriage returns
 records = [{j: (r[s] or '').replace('\r\n','\n') for j,s in jekyll2salesforce.items()} for r in records]
 
+# Salesforce currently limits multi-select picklist fields to 40 characters.
+# I need full titles to complete 2-way relationships between modules, so this
+# mapping is for expanding truncated titles to their full names.
+TITLE_LIMIT = 40
+full_titles = {record['title'][:TITLE_LIMIT]: record['title'] for record in records}
+
+# Map record types the related fields they belong in
+relation_types = {
+    'Solution': 'related_solutions',
+    'Story':    'related_stories',
+    'Theory':   'related_theories',
+    'Value':    'values'
+}
+
+# Mapping to be filled with the implicit relationships (grumble grumble...)
+# This should be handled by the Salesforce database!!! TODO: ask Eli
+relationships = {record['title']: {t: set() for t in relation_types.values()} for record in records}
+
+# Figure out all the implicit relationships
+for record in records:
+    record_title = record['title']
+    destination = relation_types[record['type']]
+    for relation_type in relation_types.values():
+        for module in record[relation_type].split(';'):
+            if module in full_titles:
+                relationships[full_titles[module]][destination].add(record_title)
+
+# Insert them back into the the semicolon-delimited lists
+for record in records:
+    for relation_type in relation_types.values():
+        relations = relationships[record['title']]
+        for module in record[relation_type].split(';'):
+            if module in full_titles:
+                relations[relation_type].add(full_titles[module])
+        record[relation_type] = ';'.join(relations[relation_type])
+
+# Spiff up the rest of the stuff
 for record in records:
     # Create a slug before modifying title
     record['slug'] = re.sub(r'(?u)\W', '-', record['title'].lower())
+
+    # Scale is given as a list but not used that way
+    record['scale'] = record['scale'].replace(';', ', ')
 
     # Typography filter
     for field in '''
@@ -133,9 +178,6 @@ for record in records:
             ).format(typography(title), typography(desc), type, url)
         record['learn_more'] = learn_more
 
-    # Scale is given as a list but not used that way
-    record['scale'] = record['scale'].replace(';', ', ')
-
 # Write the jekyll files
 # ////////////////////////////////////////////////////////////////////////////
 template = u'''---
@@ -166,15 +208,15 @@ for record in records:
     output = template.format(**record).encode('utf8')
 
     # Create output directory
-    directory = REAL_PATH + '/' + OUTPUT_PREFIX + {
+    directory = os.path.join(REAL_PATH, OUTPUT_PREFIX, {
         'Story':    '_stories',
         'Theory':   '_theories',
         'Value':    '_values',
         'Solution': '_solutions',
-    }[record['type']]
+    }[record['type']])
     if not os.path.isdir(directory):
         os.mkdir(directory)
-        warn('Created ' + directory)
+        warn('Created ' + directory, color=33)
     
     # Build path using the slug created above
     filename = u'{}/{}.md'.format(directory, record['slug'])
