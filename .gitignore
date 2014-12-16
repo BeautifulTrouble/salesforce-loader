@@ -1,0 +1,7 @@
+*.swo
+*.swp
+*.pyc
+solutions.dat
+config.py
+__pycache__
+virtualenv
