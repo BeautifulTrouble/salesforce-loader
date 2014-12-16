@@ -107,21 +107,22 @@ relationships = {record['title']: {t: set() for t in relation_types.values()} fo
 
 # Figure out all the implicit relationships
 for record in records:
-    record_title = record['title']
-    destination = relation_types[record['type']]
-    for relation_type in relation_types.values():
-        for module in record[relation_type].split(';'):
-            if module in full_titles:
-                relationships[full_titles[module]][destination].add(record_title)
+    this_title = record['title']
+    this_type = relation_types[record['type']]
+    for that_type in relation_types.values():
+        for that_title in record[that_type].split(';'):
+            if that_title in full_titles:
+                that_title = full_titles[that_title]
+                relationships[that_title][this_type].add(this_title)
 
 # Insert them back into the the semicolon-delimited lists
 for record in records:
-    for relation_type in relation_types.values():
+    for that_type in relation_types.values():
         relations = relationships[record['title']]
-        for module in record[relation_type].split(';'):
-            if module in full_titles:
-                relations[relation_type].add(full_titles[module])
-        record[relation_type] = ';'.join(relations[relation_type])
+        for that_title in record[that_type].split(';'):
+            if that_title in full_titles:
+                relations[that_type].add(full_titles[that_title])
+        record[that_type] = ';'.join(relations[that_type])
 
 # Spiff up the rest of the stuff
 for record in records:
