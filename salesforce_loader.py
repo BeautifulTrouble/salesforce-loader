@@ -9,6 +9,7 @@ from smartypants import smartypants as typography
 from simple_salesforce import Salesforce
 from config import (
     CACHE_FILE,
+    IMAGE_DIRECTORY,
     OUTPUT_PREFIX,
     SALESFORCE_USERNAME,
     SALESFORCE_PASSWORD,
@@ -134,31 +135,32 @@ for record in records:
 
 # Write the jekyll files
 # ////////////////////////////////////////////////////////////////////////////
-template = u'''---
-id: {id}
-title: "{title}"
-short_write_up: "{short_write_up}"
-where: "{where}"
-when: "{when}"
-who: "{who}"
-scale: "{scale}"
-values:{values}
-related_solutions:{related_solutions}
-related_theories:{related_theories}
-related_stories:{related_stories}
-tags:{tags}
-learn_more:{learn_more}
-images:
--
-    url: "{image_name}"
-    name: "{image_name}"
-    caption: "{image_caption}"
-    source: "{image_source}"
-    source_url: "{image_source_url}"
-contributors:{contributors}
----
-'''
 for record in records:
+    template = u'''---
+    id: {id}
+    title: "{title}"
+    short_write_up: "{short_write_up}"
+    where: "{where}"
+    when: "{when}"
+    who: "{who}"
+    scale: "{scale}"
+    values:{values}
+    related_solutions:{related_solutions}
+    related_theories:{related_theories}
+    related_stories:{related_stories}
+    tags:{tags}
+    learn_more:{learn_more}
+    images:
+    -
+        url: "{image_name}"
+        name: "{image_name}"
+        caption: "{image_caption}"
+        source: "{image_source}"
+        source_url: "{image_source_url}"
+    contributors:{contributors}
+    ---
+    '''.format(**record).encode('utf8')
+
     # Select and create output directory
     directory = REALPATH + '/' + OUTPUT_PREFIX + {
         'Story':    '_stories',
@@ -176,6 +178,6 @@ for record in records:
 
     # Produce tangible output! (But why not straight to json?)
     with open(filename, 'wb') as file:
-        file.write(template.format(**record).encode('utf8'))
+        file.write(template)
         warn('Wrote ' + filename)
 
