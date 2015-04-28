@@ -17,4 +17,7 @@
  
 ##TODO
 
-- [ ] Automatically download images
+- [ ] Prepare tool for automated use
+  - [ ] Adjust to run from solutions.thischangeseverything.org.git repo
+  - [ ] Automatically delete old modules
+  - [ ] Automatically download images
