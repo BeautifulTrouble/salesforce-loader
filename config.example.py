@@ -1,0 +1,6 @@
+CACHE_FILE                  = 'solutions.dat'
+IMAGE_DIRECTORY             = 'full_images'
+OUTPUT_PREFIX               = './'
+SALESFORCE_USERNAME         = 'salesforce_user@example.com'
+SALESFORCE_PASSWORD         = 'sa13sf0rc3_pa$$w3rd'
+SALESFORCE_SECURITY_TOKEN   = 'ABC123ABC123'
