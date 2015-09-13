@@ -1,4 +1,4 @@
-CACHE_FILE                  = 'solutions.dat'
+CACHE_FILE                  = 'solutions.cache'
 IMAGE_DIRECTORY             = 'full_images'
 OUTPUT_PREFIX               = './'
 SALESFORCE_USERNAME         = 'salesforce_user@example.com'
