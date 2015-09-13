@@ -146,7 +146,9 @@ for record in records:
     for field in '''
         short_write_up
     '''.split():
-        record[field] = markdown(record[field]).replace('"', '\\"')
+        record[field] = markdown(record[field])
+        # JSON needs \" so Jekyll needs \\ followed by \"
+        record[field] = record[field].replace('"', r'\\\"')
 
     # Semicolon-delimited --> YAML lists filter
     for field in '''
