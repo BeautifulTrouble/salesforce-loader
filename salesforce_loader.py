@@ -146,7 +146,7 @@ for record in records:
     for field in '''
         short_write_up
     '''.split():
-        record[field] = markdown(record[field])
+        record[field] = markdown(record[field]).replace('"', '\\"')
 
     # Semicolon-delimited --> YAML lists filter
     for field in '''
@@ -206,8 +206,6 @@ contributors:{contributors}
 ---
 '''
 for record in records:
-    for k,v in record.items():
-        record[k] = v.replace('"', '\\"')
     output = template.format(**record).encode('utf8')
 
     # Create output directory
