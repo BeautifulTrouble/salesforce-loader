@@ -206,6 +206,8 @@ contributors:{contributors}
 ---
 '''
 for record in records:
+    for k,v in record.items():
+        record[k] = v.replace('"', '\\"')
     output = template.format(**record).encode('utf8')
 
     # Create output directory
